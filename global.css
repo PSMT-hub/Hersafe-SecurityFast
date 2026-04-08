@@ -1,3 +1,106 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================================
+   HERSAFE — Design System
+   Tema: Dark Mode (cinza profundo, não preto absoluto)
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* --------------------------------------------------
+       BACKGROUNDS — escala de profundidade dark
+       -------------------------------------------------- */
+    --color-bg:          #121218; /* Fundo principal — quase preto, mas acinzentado */
+    --color-surface:     #1C1C27; /* Cards, painéis, bottom sheet */
+    --color-surface-2:   #252535; /* Inputs, elementos elevados */
+    --color-surface-3:   #2E2E42; /* Bordas, separadores, hover de card */
+
+    /* --------------------------------------------------
+       PRIMARY — Violeta Proteção
+       Tom principal de identidade visual
+       -------------------------------------------------- */
+    --color-primary:          #8B5CF6; /* Violeta vibrante — botões, links */
+    --color-primary-light:    #A78BFA; /* Hover, ícones ativos */
+    --color-primary-dark:     #6D28D9; /* Pressed, foco */
+    --color-primary-muted:    #3B1F6E; /* Fundo de badges, chips */
+
+    /* --------------------------------------------------
+       EMERGENCY — Rosa/Magenta SOS
+       Cor de máxima urgência — botão de pânico
+       -------------------------------------------------- */
+    --color-emergency:        #E91E8C; /* Botão SOS principal */
+    --color-emergency-light:  #F472B6; /* Ícones de alerta, badges */
+    --color-emergency-dark:   #BE185D; /* Pressed do botão SOS */
+    --color-emergency-muted:  #4A0D2E; /* Fundo de zonas de alerta */
+
+    /* --------------------------------------------------
+       SEMANTIC — Status e feedback
+       -------------------------------------------------- */
+    --color-safe:         #10B981; /* Status "estou segura", confirmação */
+    --color-safe-muted:   #064E3B; /* Fundo de badge "segura" */
+    --color-warning:      #F59E0B; /* Alertas moderados, atenção */
+    --color-warning-muted:#451A00; /* Fundo de badge "atenção" */
+    --color-danger:       #EF4444; /* Erros, falhas */
+    --color-danger-muted: #450A0A; /* Fundo de erros */
+
+    /* --------------------------------------------------
+       TEXT — Hierarquia tipográfica
+       -------------------------------------------------- */
+    --color-text:         #F0EFFE; /* Texto principal — quase branco, tom lilás */
+    --color-text-muted:   #9B98B8; /* Subtítulos, labels, placeholders */
+    --color-text-dim:     #5C5A7A; /* Texto desabilitado, muito secundário */
+    --color-text-inverse: #121218; /* Texto sobre fundos claros */
+
+    /* --------------------------------------------------
+       BORDER — Linhas e divisores
+       -------------------------------------------------- */
+    --color-border:       #2E2E42; /* Borda padrão */
+    --color-border-focus: #8B5CF6; /* Borda em foco (inputs ativos) */
+
+    /* --------------------------------------------------
+       TYPOGRAPHY — Escala de tamanhos (em rem)
+       -------------------------------------------------- */
+    --font-xs:   0.75rem;   /* 12px — caption, badges */
+    --font-sm:   0.875rem;  /* 14px — body small, labels */
+    --font-base: 1rem;      /* 16px — body padrão */
+    --font-lg:   1.125rem;  /* 18px — body large */
+    --font-xl:   1.25rem;   /* 20px — subtitle */
+    --font-2xl:  1.5rem;    /* 24px — title */
+    --font-3xl:  1.875rem;  /* 30px — heading */
+    --font-4xl:  2.25rem;   /* 36px — hero */
+
+    /* --------------------------------------------------
+       SPACING — Escala de espaçamento base 4px
+       -------------------------------------------------- */
+    --space-1:  4px;
+    --space-2:  8px;
+    --space-3:  12px;
+    --space-4:  16px;
+    --space-5:  20px;
+    --space-6:  24px;
+    --space-8:  32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
+
+    /* --------------------------------------------------
+       RADIUS — Arredondamento de bordas
+       -------------------------------------------------- */
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   16px;
+    --radius-xl:   24px;
+    --radius-full: 9999px;
+
+    /* --------------------------------------------------
+       SHADOWS — Sombras com toque roxo/violeta
+       -------------------------------------------------- */
+    --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.6);
+    --shadow-glow-primary:    0 0 20px rgba(139, 92, 246, 0.35);
+    --shadow-glow-emergency:  0 0 24px rgba(233, 30, 140, 0.45);
+  }
+}
