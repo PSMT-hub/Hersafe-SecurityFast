@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import AppNavigator from './AppNavigator';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import TipsScreen from '../screens/TipsScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Param Lists para type-safety nas navegações
@@ -17,6 +19,8 @@ export type AuthStackParamList = {
 
 export type AppStackParamList = {
   Main: undefined; // tab navigator
+  Tips: undefined;
+  Notifications: undefined;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,6 +43,8 @@ function AppRootNavigator() {
   return (
     <AppStack.Navigator screenOptions={{ headerShown: false }}>
       <AppStack.Screen name="Main" component={AppNavigator} />
+      <AppStack.Screen name="Tips" component={TipsScreen} options={{ headerShown: true, title: 'Dicas e Ajuda', headerBackTitle: '', headerTintColor: '#F0EFFE', headerStyle: { backgroundColor: '#1C1C27' } }} />
+      <AppStack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notificações', headerBackTitle: '', headerTintColor: '#F0EFFE', headerStyle: { backgroundColor: '#1C1C27' } }} />
     </AppStack.Navigator>
   );
 }

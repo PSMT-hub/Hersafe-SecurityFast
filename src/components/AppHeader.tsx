@@ -3,19 +3,15 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AppStackParamList } from '../navigation/RootNavigator';
 
-interface AppHeaderProps {
-  /** Callback ao pressionar o ícone de ação no canto direito */
-  onActionPress?: () => void;
-  /** Ícone do botão de ação (padrão: sino de notificações) */
-  actionIcon?: keyof typeof Ionicons.glyphMap;
-}
+type NavigationProp = NativeStackNavigationProp<AppStackParamList>;
 
-export default function AppHeader({
-  onActionPress,
-  actionIcon = 'notifications-outline',
-}: AppHeaderProps) {
+export default function AppHeader() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NavigationProp>();
 
   return (
     <View
@@ -32,14 +28,24 @@ export default function AppHeader({
         <Text style={styles.logoAccent}>SAFE</Text>
       </View>
 
-      {/* ── Ação direita: ícone com fundo primary ──── */}
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={onActionPress}
-        activeOpacity={0.75}
-      >
-        <Ionicons name={actionIcon} size={18} color={colors.text} />
-      </TouchableOpacity>
+      {/* ── Ações direita (Dicas e Notificações) ──── */}
+      <View style={styles.actionsRow}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('Tips')}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="bulb-outline" size={18} color={colors.text} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('Notifications')}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="notifications-outline" size={18} color={colors.text} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -72,6 +78,11 @@ const styles = StyleSheet.create({
     fontWeight:  '700',
     color:       colors.primary,
     letterSpacing: 1.5,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   actionButton: {
     width:           36,

@@ -15,13 +15,10 @@ import { colors } from '../../theme/colors';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 
-// Altura visível mínima: handle (14px) + padding (12px) + header (~44px) = ~70px
-const PEEK_HEIGHT = 70;
-
 const SNAP = {
-  expanded:  SCREEN_H * 0.35,          // 65% da tela visível
+  expanded:  SCREEN_H * 0.35,          // 65% da tela visível no topo
   half:      SCREEN_H * 0.62,          // ~38% visível
-  collapsed: SCREEN_H - PEEK_HEIGHT,   // só handle + header aparecem
+  collapsed: SCREEN_H * 0.96,          // Deixa ~24% da tela visível para não sumir atrás da navbar
 };
 
 interface Props {
@@ -52,11 +49,12 @@ export default function PeopleDrawer({ persons, onPersonPress }: Props) {
         translateY.stopAnimation((val) => { lastY.current = val; });
       },
       onPanResponderMove: (_, g) => {
-        const next = lastY.current + g.dy;
-        // Limita entre o topo expandido e o mínimo (peek)
-        if (next >= SNAP.expanded && next <= SNAP.collapsed) {
-          translateY.setValue(next);
-        }
+        let next = lastY.current + g.dy;
+        // Limita o arraste entre o máximo (expanded) e o mínimo (collapsed)
+        if (next < SNAP.expanded) next = SNAP.expanded;
+        if (next > SNAP.collapsed) next = SNAP.collapsed;
+        
+        translateY.setValue(next);
       },
       onPanResponderRelease: (_, g) => {
         const current = lastY.current + g.dy;
