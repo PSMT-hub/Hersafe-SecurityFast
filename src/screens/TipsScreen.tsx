@@ -1,6 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Linking, Alert } from 'react-native';
+
+import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
+
 import { colors } from '../theme/colors';
 
 type TipType = 'video' | 'portal' | 'info';
@@ -11,7 +14,9 @@ interface TipCard {
   description: string;
   type: TipType;
   actionText: string;
+  url: string;
 }
+
 
 const MOCK_TIPS: TipCard[] = [
   {
@@ -20,6 +25,7 @@ const MOCK_TIPS: TipCard[] = [
     description: 'Aprenda a identificar situações de risco e saiba como agir para proteger sua integridade.',
     type: 'info',
     actionText: 'Ler mais',
+    url: 'https://pc.sc.gov.br/?page_id=75',
   },
   {
     id: '2',
@@ -27,6 +33,7 @@ const MOCK_TIPS: TipCard[] = [
     description: 'Assista ao vídeo com técnicas essenciais que podem fazer a diferença em momentos críticos.',
     type: 'video',
     actionText: 'Assistir Vídeo',
+    url: 'https://youtu.be/PcIUq256Lts?si=vphq-ASOCAsnqkis',
   },
   {
     id: '3',
@@ -34,15 +41,11 @@ const MOCK_TIPS: TipCard[] = [
     description: 'Conheça seus direitos e veja os canais de denúncia online em caso de assédio ou perigo.',
     type: 'portal',
     actionText: 'Acessar Portal',
+    url: 'https://www.delegaciaeletronica.policiacivil.sp.gov.br/',
   },
-  {
-    id: '4',
-    title: 'Como configurar contatos de emergência',
-    description: 'Veja como adicionar contatos confiáveis e deixar as mensagens SOS prontas para uso.',
-    type: 'info',
-    actionText: 'Ver tutorial',
-  },
+
 ];
+
 
 const getTipStyle = (type: TipType) => {
   switch (type) {
@@ -56,10 +59,31 @@ const getTipStyle = (type: TipType) => {
 };
 
 export default function TipsScreen() {
-  const handlePress = (item: TipCard) => {
-    // Ação mockada (abriria o portal ou tocaria vídeo)
-    console.log('[TipsScreen] action Pressed:', item.title);
+  const handlePress = async (item: TipCard) => {
+    try {
+      if (item.type === 'video' || item.url.includes('youtube.com') || item.url.includes('youtu.be')) {
+        // Para vídeos, tentamos abrir diretamente no app do YouTube
+        const supported = await Linking.canOpenURL(item.url);
+        if (supported) {
+          await Linking.openURL(item.url);
+        } else {
+          // Se não conseguir abrir o app, abre no navegador in-app
+          await WebBrowser.openBrowserAsync(item.url);
+        }
+      } else {
+        // Para outros links, usamos o WebBrowser para manter a experiência premium in-app
+        await WebBrowser.openBrowserAsync(item.url, {
+          toolbarColor: colors.primary,
+          enableBarCollapsing: true,
+          showTitle: true,
+        });
+      }
+    } catch (error) {
+      console.error('[TipsScreen] Error opening link:', error);
+      Alert.alert('Erro', 'Não foi possível abrir o link solicitado.');
+    }
   };
+
 
   const renderItem = ({ item }: { item: TipCard }) => {
     const styleInfo = getTipStyle(item.type);
