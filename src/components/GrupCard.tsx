@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Pencil, Users } from 'lucide-react-native';
-import { Group } from '@/data/mockGroups';
+import { Group } from '@/Data/mockgroups';
  
 type Props = {
   group: Group;

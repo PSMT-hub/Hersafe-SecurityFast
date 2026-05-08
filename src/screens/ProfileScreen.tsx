@@ -1,42 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-  Image,
   TextInput,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 
-
-
 import { MOCK_LOCATIONS } from '@/Data/Location';
-import {LocationCard} from '@/components/Profile/LocationCard';
-import {MapPin} from 'lucide-react-native';
+import { LocationCard } from '@/components/Profile/LocationCard';
+import { MapPin } from 'lucide-react-native';
+import { useAuth } from '../context/AuthContext';
+import { updateUser } from '../services/userService';
 
-type Field = {
-  label: string;
-  value: string;
-  key: string;
-  secure?: boolean;
-};
+// ─── Tipos ─────────────────────────────────────────────────────────────────────
 
-const FIELDS: Field[] = [
-  { label: 'Nome', value: 'Ana Silva', key: 'name' },
-  { label: 'E-mail', value: 'ana@email.com', key: 'email' },
-  { label: 'Senha', value: '••••••••', key: 'password', secure: true },
-  { label: 'Telefone', value: '+55 11 99999-0000', key: 'phone' },
-  { label: 'Contato de Emergência', value: '+55 11 88888-0000', key: 'emergency' },
-];
+type EditableField = 'nome' | 'email' | 'telefone';
+
+// ─── Tela ──────────────────────────────────────────────────────────────────────
 
 export default function ProfileScreen() {
-  const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState<Record<string, string>>(
-    Object.fromEntries(FIELDS.map((f) => [f.key, f.value]))
+  const { user, token, logout, refreshUser } = useAuth();
+
+  const [editing, setEditing] = useState<EditableField | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Estado local espelha os dados do usuário para edição inline
+  const [form, setForm] = useState({
+    nome: user?.nome ?? '',
+    email: user?.email ?? '',
+    telefone: user?.telefone ?? '',
+  });
+
+  // ── Salvar campo editado ────────────────────────────────────────────────────
+  const handleSave = useCallback(
+    async (field: EditableField) => {
+      if (!user || !token) return;
+      setSaving(true);
+      try {
+        await updateUser(user.id, { [field]: form[field] }, token);
+        await refreshUser();
+        setEditing(null);
+      } catch (err: any) {
+        Alert.alert('Erro', err.message ?? 'Não foi possível salvar.');
+      } finally {
+        setSaving(false);
+      }
+    },
+    [user, token, form, refreshUser],
   );
 
-  const handleEdit = (key: string) => setEditing(key);
-  const handleSave = () => setEditing(null);
+  // ── Logout ─────────────────────────────────────────────────────────────────
+  const handleLogout = useCallback(() => {
+    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: () => logout() },
+    ]);
+  }, [logout]);
+
+  if (!user) return null;
+
+  const displayFields: { label: string; key: EditableField; keyboard?: any }[] = [
+    { label: 'Nome', key: 'nome', keyboard: 'default' },
+    { label: 'E-mail', key: 'email', keyboard: 'email-address' },
+    { label: 'Telefone', key: 'telefone', keyboard: 'phone-pad' },
+  ];
 
   return (
     <ScrollView
@@ -50,59 +80,70 @@ export default function ProfileScreen() {
           <View className="w-24 h-24 rounded-full bg-surface-2 border-2 border-primary items-center justify-center overflow-hidden">
             <Text className="text-5xl">👤</Text>
           </View>
-          <TouchableOpacity className="absolute bottom-0 right-0 w-7 h-7 bg-primary rounded-full items-center justify-center border-2 border-bg">
-            <Text className="text-white text-xs">✏️</Text>
-          </TouchableOpacity>
         </View>
 
-        <Text className="text-xl font-bold text-text">{form.name}</Text>
-        <Text className="text-sm text-text-muted mt-1">{form.email}</Text>
+        <Text className="text-xl font-bold text-text">{user.nome}</Text>
+        <Text className="text-sm text-text-muted mt-1">{user.email}</Text>
       </View>
 
       {/* Divisor */}
       <View className="h-px bg-surface-3 mx-6 mb-6" />
 
-      {/* Campos */}
+      {/* Campos editáveis */}
       <View className="px-6 gap-3">
         <Text className="text-xs font-semibold text-text-dim uppercase tracking-widest mb-1">
           Informações pessoais
         </Text>
 
-        {FIELDS.map((field) => (
+        {displayFields.map(({ label, key, keyboard }) => (
           <FieldCard
-            key={field.key}
-            field={field}
-            value={form[field.key]}
-            isEditing={editing === field.key}
-            onEdit={() => handleEdit(field.key)}
-            onSave={handleSave}
-            onChange={(val) => setForm((prev) => ({ ...prev, [field.key]: val }))}
+            key={key}
+            label={label}
+            value={form[key]}
+            isEditing={editing === key}
+            isSaving={saving && editing === key}
+            keyboardType={keyboard}
+            onEdit={() => {
+              // Sincroniza o form com os dados mais recentes antes de editar
+              setForm({
+                nome: user.nome ?? '',
+                email: user.email ?? '',
+                telefone: user.telefone ?? '',
+              });
+              setEditing(key);
+            }}
+            onSave={() => handleSave(key)}
+            onCancel={() => setEditing(null)}
+            onChange={(val) => setForm((prev) => ({ ...prev, [key]: val }))}
           />
         ))}
       </View>
 
       {/* Meus Locais */}
-   <View>
-<SectionTitle>Meus locais</SectionTitle>
- 
-  <View className="gap-3">
-    {MOCK_LOCATIONS.map((location) => (
-<LocationCard key={location.id} item={location} />
-    ))}
-</View>
- 
-  <TouchableOpacity
-    activeOpacity={0.8}
-    className="mt-4 flex-row items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-4"
->
-<MapPin size={16} color="#9B98B8" />
-<Text className="text-sm text-text-muted font-medium">Adicionar local</Text>
-</TouchableOpacity>
-</View>
+      <View>
+        <SectionTitle>Meus locais</SectionTitle>
+
+        <View className="gap-3">
+          {MOCK_LOCATIONS.map((location) => (
+            <LocationCard key={location.id} item={location} />
+          ))}
+        </View>
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          className="mt-4 mx-6 flex-row items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-4"
+        >
+          <MapPin size={16} color="#9B98B8" />
+          <Text className="text-sm text-text-muted font-medium">Adicionar local</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Sair */}
       <View className="px-6 mt-8">
-        <TouchableOpacity className="bg-emergency-muted border border-emergency rounded-2xl py-4 items-center">
+        <TouchableOpacity
+          onPress={handleLogout}
+          className="bg-emergency-muted border border-emergency rounded-2xl py-4 items-center"
+        >
           <Text className="text-emergency font-semibold text-sm">Sair da conta</Text>
         </TouchableOpacity>
       </View>
@@ -123,18 +164,31 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 // ─── Field Card ────────────────────────────────────────────────────────────────
 
 type FieldCardProps = {
-  field: Field;
+  label: string;
   value: string;
   isEditing: boolean;
+  isSaving: boolean;
+  keyboardType?: any;
   onEdit: () => void;
   onSave: () => void;
+  onCancel: () => void;
   onChange: (val: string) => void;
 };
 
-function FieldCard({ field, value, isEditing, onEdit, onSave, onChange }: FieldCardProps) {
+function FieldCard({
+  label,
+  value,
+  isEditing,
+  isSaving,
+  keyboardType,
+  onEdit,
+  onSave,
+  onCancel,
+  onChange,
+}: FieldCardProps) {
   return (
     <View className="bg-surface rounded-2xl border border-surface-3 px-4 py-3">
-      <Text className="text-xs text-text-dim mb-1">{field.label}</Text>
+      <Text className="text-xs text-text-dim mb-1">{label}</Text>
 
       <View className="flex-row items-center justify-between">
         {isEditing ? (
@@ -142,25 +196,44 @@ function FieldCard({ field, value, isEditing, onEdit, onSave, onChange }: FieldC
             className="flex-1 text-text text-sm"
             value={value}
             onChangeText={onChange}
-            secureTextEntry={field.secure}
+            keyboardType={keyboardType}
             autoFocus
             placeholderTextColor="#5C5A7A"
           />
         ) : (
-          <Text className="flex-1 text-text text-sm">
-            {field.secure ? '••••••••' : value}
-          </Text>
+          <Text className="flex-1 text-text text-sm">{value || '—'}</Text>
         )}
 
-        <TouchableOpacity
-          onPress={isEditing ? onSave : onEdit}
-          className="ml-3"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Text className="text-primary-light text-xs font-medium">
-            {isEditing ? 'Salvar' : 'Editar'}
-          </Text>
-        </TouchableOpacity>
+        <View className="flex-row gap-3 ml-3">
+          {isEditing ? (
+            <>
+              <TouchableOpacity
+                onPress={onCancel}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text className="text-text-dim text-xs font-medium">Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={onSave}
+                disabled={isSaving}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                {isSaving ? (
+                  <ActivityIndicator size="small" color="#A78BFA" />
+                ) : (
+                  <Text className="text-primary-light text-xs font-medium">Salvar</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity
+              onPress={onEdit}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text className="text-primary-light text-xs font-medium">Editar</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </View>
   );

@@ -3,50 +3,38 @@ import React, {
   useContext,
   useState,
   useCallback,
+  useEffect,
   ReactNode,
 } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { loginUser, registerUser, getProfile } from '../services/userService';
+import type { ApiUser, RegisterPayload } from '../types/user';
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  avatarUrl?: string;
-  cpf?: string;
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Constantes
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TOKEN_KEY = '@hersafe:token';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tipos do contexto
+// ─────────────────────────────────────────────────────────────────────────────
 
 export interface AuthContextData {
-  user: User | null;
+  user: ApiUser | null;
+  token: string | null;
   isLoading: boolean;
+  /** true enquanto valida o token salvo na inicialização do app */
+  isBootstrapping: boolean;
   isAuthenticated: boolean;
-  
+
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
-  logout: () => void;
+  register: (dados: Omit<RegisterPayload, 'meusLocais'>) => Promise<void>;
+  logout: () => Promise<void>;
+  /** Atualiza os dados do user no contexto após um PUT bem-sucedido */
+  refreshUser: () => Promise<void>;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Mock data  →  substituir por chamadas reais à API futuramente
-// ─────────────────────────────────────────────────────────────────────────────
-
-const MOCK_USER: User = {
-  id: '1',
-  name: 'Ana Silva',
-  email: 'ana@hersafe.com',
-  phone: '+55 11 99999-9999',
-  avatarUrl: undefined,
-};
-
-// Credenciais mockadas para login
-const MOCK_CREDENTIALS = {
-  email: 'ana@hersafe.com',
-  password: '123456',
-};
-
-// Simula latência de rede
-const fakeDelay = (ms = 1000) =>
-  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Context
@@ -55,46 +43,57 @@ const fakeDelay = (ms = 1000) =>
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ApiUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
 
-  // ── Login ────────────────────────────────────────────────────────────────
-  // TODO: substituir por POST /auth/login  →  salvar token no SecureStore
+  // ── Inicialização: valida token salvo ─────────────────────────────────────
+  // Fluxo: abre o app → tem token? → GET /perfil → ok? → Home : Login
+  useEffect(() => {
+    async function bootstrap() {
+      try {
+        const savedToken = await AsyncStorage.getItem(TOKEN_KEY);
+        if (savedToken) {
+          const { usuario } = await getProfile(savedToken);
+          setToken(savedToken);
+          setUser(usuario);
+        }
+      } catch {
+        // Token expirado ou inválido — limpa e vai para Login
+        await AsyncStorage.removeItem(TOKEN_KEY);
+      } finally {
+        setIsBootstrapping(false);
+      }
+    }
+    bootstrap();
+  }, []);
+
+  // ── Login ──────────────────────────────────────────────────────────────────
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      await fakeDelay();
-
-      if (
-        email.trim().toLowerCase() !== MOCK_CREDENTIALS.email ||
-        password !== MOCK_CREDENTIALS.password
-      ) {
-        throw new Error('E-mail ou senha incorretos.');
-      }
-
-      setUser(MOCK_USER);
+      const { token: newToken, usuario } = await loginUser(email, password);
+      await AsyncStorage.setItem(TOKEN_KEY, newToken);
+      setToken(newToken);
+      setUser(usuario);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // ── Register ─────────────────────────────────────────────────────────────
-  // TODO: substituir por POST /auth/register  →  salvar token no SecureStore
+  // ── Register ───────────────────────────────────────────────────────────────
   const register = useCallback(
-    async (name: string, email: string, _password: string, phone?: string) => {
+    async (dados: Omit<RegisterPayload, 'meusLocais'>) => {
       setIsLoading(true);
       try {
-        await fakeDelay();
-
-        // Simulação: qualquer registro bem-sucedido cria o usuário
-        const newUser: User = {
-          id: String(Date.now()),
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          phone,
-        };
-
-        setUser(newUser);
+        const { token: newToken, usuario } = await registerUser({
+          ...dados,
+          meusLocais: [],
+        });
+        await AsyncStorage.setItem(TOKEN_KEY, newToken);
+        setToken(newToken);
+        setUser(usuario);
       } finally {
         setIsLoading(false);
       }
@@ -102,21 +101,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  // ── Logout ───────────────────────────────────────────────────────────────
-  // TODO: limpar token do SecureStore e invalidar sessão no backend
-  const logout = useCallback(() => {
+  // ── Logout ─────────────────────────────────────────────────────────────────
+  const logout = useCallback(async () => {
+    await AsyncStorage.removeItem(TOKEN_KEY);
+    setToken(null);
     setUser(null);
   }, []);
+
+  // ── Refresh do perfil (pós-atualização) ───────────────────────────────────
+  const refreshUser = useCallback(async () => {
+    if (!token) return;
+    try {
+      const { usuario } = await getProfile(token);
+      setUser(usuario);
+    } catch {
+      // Se falhar (ex: token expirou), faz logout silencioso
+      await logout();
+    }
+  }, [token, logout]);
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        token,
         isLoading,
+        isBootstrapping,
         isAuthenticated: !!user,
         login,
         register,
         logout,
+        refreshUser,
       }}
     >
       {children}

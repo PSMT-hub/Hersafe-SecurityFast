@@ -28,7 +28,7 @@ export default function LoginScreen({ navigation }: Props) {
       return;
     }
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       // Navegação ocorre automaticamente via RootNavigator ao isAuthenticated virar true
     } catch (err: any) {
       Alert.alert('Erro', err.message ?? 'Não foi possível fazer login.');
@@ -46,17 +46,9 @@ export default function LoginScreen({ navigation }: Props) {
       >
         <View className="flex-1 items-center justify-center bg-bg px-6">
           <Text className="text-3xl font-bold text-text mb-1">Login</Text>
-          <Text className="text-base text-text-muted mb-8">Faça login para continuar</Text>
-
-          {/* ── Hint mock ─────────────────────────────── */}
-          <View className="w-full bg-surface border border-border rounded-xl p-3 mb-6">
-            <Text className="text-text-muted text-sm">
-              🧪 Mock:{'  '}
-              <Text className="text-primary font-semibold">ana@hersafe.com</Text>
-              {'  '}|{'  '}
-              <Text className="text-primary font-semibold">123456</Text>
-            </Text>
-          </View>
+          <Text className="text-base text-text-muted mb-8">
+            Faça login para continuar
+          </Text>
 
           {/* ── Campos ────────────────────────────────── */}
           <TextInput
@@ -65,6 +57,7 @@ export default function LoginScreen({ navigation }: Props) {
             placeholderTextColor="#666"
             keyboardType="email-address"
             autoCapitalize="none"
+            autoCorrect={false}
             value={email}
             onChangeText={setEmail}
           />

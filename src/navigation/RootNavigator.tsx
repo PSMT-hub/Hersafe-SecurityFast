@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { useAuth } from '../context/AuthContext';
@@ -54,7 +55,16 @@ function AppRootNavigator() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function RootNavigator() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isBootstrapping } = useAuth();
+
+  // Aguarda validação do token salvo antes de decidir qual stack exibir
+  if (isBootstrapping) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#121218' }}>
+        <ActivityIndicator size="large" color="#A78BFA" />
+      </View>
+    );
+  }
 
   return isAuthenticated ? <AppRootNavigator /> : <AuthNavigator />;
 }

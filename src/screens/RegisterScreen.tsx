@@ -26,8 +26,8 @@ export default function RegisterScreen({ navigation }: Props) {
   const [confirm,  setConfirm]  = useState('');
 
   async function handleRegister() {
-    if (!name.trim() || !email.trim() || !password) {
-      Alert.alert('Atenção', 'Preencha nome, e-mail e senha.');
+    if (!name.trim() || !email.trim() || !password || !phone.trim()) {
+      Alert.alert('Atenção', 'Preencha nome, e-mail, telefone e senha.');
       return;
     }
     if (password !== confirm) {
@@ -35,7 +35,12 @@ export default function RegisterScreen({ navigation }: Props) {
       return;
     }
     try {
-      await register(name, email, password, phone || undefined);
+      await register({
+        nome: name.trim(),
+        email: email.trim().toLowerCase(),
+        senha: password,
+        telefone: phone.trim(),
+      });
       // Navegação ocorre automaticamente via RootNavigator
     } catch (err: any) {
       Alert.alert('Erro', err.message ?? 'Não foi possível criar a conta.');
@@ -53,7 +58,9 @@ export default function RegisterScreen({ navigation }: Props) {
       >
         <View className="flex-1 items-center justify-center bg-bg px-6 py-10">
           <Text className="text-3xl font-bold text-text mb-1">Cadastro</Text>
-          <Text className="text-base text-text-muted mb-8">Crie sua conta para continuar</Text>
+          <Text className="text-base text-text-muted mb-8">
+            Crie sua conta para continuar
+          </Text>
 
           {/* ── Campos ────────────────────────────────── */}
           <TextInput
@@ -70,12 +77,13 @@ export default function RegisterScreen({ navigation }: Props) {
             placeholderTextColor="#666"
             keyboardType="email-address"
             autoCapitalize="none"
+            autoCorrect={false}
             value={email}
             onChangeText={setEmail}
           />
           <TextInput
             className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-text mb-3"
-            placeholder="Telefone (opcional)"
+            placeholder="Telefone"
             placeholderTextColor="#666"
             keyboardType="phone-pad"
             value={phone}
