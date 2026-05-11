@@ -17,6 +17,14 @@ import type { ApiUser, RegisterPayload } from '../types/user';
 
 const TOKEN_KEY = '@hersafe:token';
 
+function normalizeUser(usuario: ApiUser): ApiUser {
+  return {
+    ...usuario,
+    id: usuario.id ?? usuario._id ?? '',
+    meusLocais: usuario.meusLocais ?? [],
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos do contexto
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (savedToken) {
           const { usuario } = await getProfile(savedToken);
           setToken(savedToken);
-          setUser(usuario);
+          setUser(normalizeUser(usuario));
         }
       } catch {
         // Token expirado ou inválido — limpa e vai para Login
@@ -76,30 +84,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { token: newToken, usuario } = await loginUser(email, password);
       await AsyncStorage.setItem(TOKEN_KEY, newToken);
       setToken(newToken);
-      setUser(usuario);
+      setUser(normalizeUser(usuario));
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   // ── Register ───────────────────────────────────────────────────────────────
-  const register = useCallback(
-    async (dados: Omit<RegisterPayload, 'meusLocais'>) => {
-      setIsLoading(true);
-      try {
-        const { token: newToken, usuario } = await registerUser({
-          ...dados,
-          meusLocais: [],
-        });
-        await AsyncStorage.setItem(TOKEN_KEY, newToken);
-        setToken(newToken);
-        setUser(usuario);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [],
-  );
+  const register = useCallback(async (dados: Omit<RegisterPayload, 'meusLocais'>) => {
+    setIsLoading(true);
+    try {
+      const { token: newToken, usuario } = await registerUser({
+        ...dados,
+        meusLocais: [],
+      });
+      await AsyncStorage.setItem(TOKEN_KEY, newToken);
+      setToken(newToken);
+      setUser(normalizeUser(usuario));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // ── Logout ─────────────────────────────────────────────────────────────────
   const logout = useCallback(async () => {
@@ -113,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) return;
     try {
       const { usuario } = await getProfile(token);
-      setUser(usuario);
+      setUser(normalizeUser(usuario));
     } catch {
       // Se falhar (ex: token expirou), faz logout silencioso
       await logout();
@@ -132,8 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         refreshUser,
-      }}
-    >
+      }}>
       {children}
     </AuthContext.Provider>
   );

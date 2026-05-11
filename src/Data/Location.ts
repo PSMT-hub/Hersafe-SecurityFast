@@ -1,68 +1,29 @@
-// data/locations.ts
+import type { MyLocation } from '../types/user';
 
-import { Location } from '@/components/Profile/LocationCard';
- 
-export const MOCK_LOCATIONS: Location[] = [
-
+export const MOCK_LOCATIONS: MyLocation[] = [
   {
-
-    id: '1',
-
-    name: 'Minha casa',
-
-    category: 'casa',
-
-    address: 'Rua das Flores, 142 — Vila Madalena, SP',
-
+    _id: '1',
+    nome: 'Minha casa',
+    endereco: 'Rua das Flores, 142 - Vila Madalena, SP',
   },
-
   {
-
-    id: '2',
-
-    name: 'Escritório',
-
-    category: 'trabalho',
-
-    address: 'Av. Paulista, 1000 — Bela Vista, SP',
-
+    _id: '2',
+    nome: 'Escritorio',
+    endereco: 'Av. Paulista, 1000 - Bela Vista, SP',
   },
-
   {
-
-    id: '3',
-
-    name: 'Smart Fit',
-
-    category: 'academia',
-
-    address: 'R. Augusta, 500 — Consolação, SP',
-
+    _id: '3',
+    nome: 'Smart Fit',
+    endereco: 'R. Augusta, 500 - Consolacao, SP',
   },
-
   {
-
-    id: '4',
-
-    name: 'ETEC Centro',
-
-    category: 'escola',
-
-    address: 'Rua Bom Pastor, 1200 — Ipiranga, SP',
-
+    _id: '4',
+    nome: 'ETEC Centro',
+    endereco: 'Rua Bom Pastor, 1200 - Ipiranga, SP',
   },
-
   {
-
-    id: '5',
-
-    name: 'Shopping Interlagos',
-
-    category: 'outro',
-
-    address: 'Av. Interlagos, 2255 — Interlagos, SP',
-
+    _id: '5',
+    nome: 'Shopping Interlagos',
+    endereco: 'Av. Interlagos, 2255 - Interlagos, SP',
   },
-
 ];
- 

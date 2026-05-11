@@ -4,8 +4,42 @@
 // Para trocar para produção, basta alterar BASE_URL.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** URL base da API. Troque para o endereço de produção antes do deploy. */
-export const BASE_URL = 'http://192.168.0.243:3000/api';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+
+declare const process:
+  | {
+      env?: Record<string, string | undefined>;
+    }
+  | undefined;
+
+const API_PORT = 3000;
+const API_PATH = '/api';
+const REQUEST_TIMEOUT_MS = 10000;
+
+function getExpoHost(): string | null {
+  const hostUri =
+    Constants.expoConfig?.hostUri ?? Constants.manifest?.hostUri ?? Constants.linkingUri;
+
+  if (!hostUri) return null;
+
+  const host = hostUri
+    .replace(/^https?:\/\//, '')
+    .replace(/^exp:\/\//, '')
+    .replace(/^exps:\/\//, '')
+    .split('/')[0]
+    .split(':')[0];
+
+  return host || null;
+}
+
+const DEFAULT_API_HOST = Platform.OS === 'web' ? 'localhost' : getExpoHost();
+
+/** URL base da API. No Expo Go, usa automaticamente o mesmo host do Metro. */
+export const BASE_URL = (
+  process?.env?.EXPO_PUBLIC_API_URL ??
+  `http://${DEFAULT_API_HOST ?? 'localhost'}:${API_PORT}${API_PATH}`
+).replace(/\/$/, '');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -26,10 +60,7 @@ interface FetchOptions {
  *  - header `Authorization: Bearer <token>` quando fornecido
  *  - throw de Error com a mensagem do backend em caso de resposta não-OK
  */
-export async function apiFetch<T = unknown>(
-  path: string,
-  options: FetchOptions = {}
-): Promise<T> {
+export async function apiFetch<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
   const { method = 'GET', body, token } = options;
 
   const headers: Record<string, string> = {
@@ -40,11 +71,26 @@ export async function apiFetch<T = unknown>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+  } catch (error: any) {
+    const isTimeout = error?.name === 'AbortError';
+    const reason = isTimeout ? 'tempo limite excedido' : 'falha de conexao';
+    throw new Error(
+      `Nao foi possivel conectar a API em ${BASE_URL} (${reason}). Verifique se o backend esta rodando e se o celular/emulador esta na mesma rede.`
+    );
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   // Tenta parsear o JSON independente do status
   let data: any;
@@ -56,8 +102,7 @@ export async function apiFetch<T = unknown>(
 
   if (!response.ok) {
     // Lança o erro com a mensagem padronizada do backend
-    const mensagem =
-      data?.mensagem ?? `Erro ${response.status}: ${response.statusText}`;
+    const mensagem = data?.mensagem ?? `Erro ${response.status}: ${response.statusText}`;
     throw new Error(mensagem);
   }
 

@@ -17,6 +17,7 @@ export interface MyLocation {
 
 /** Modelo retornado pela API (campo `senha` nunca é retornado) */
 export interface ApiUser {
+  _id?: string;
   id: string;
   nome: string;
   email: string;
