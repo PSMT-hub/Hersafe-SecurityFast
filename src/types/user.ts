@@ -7,12 +7,15 @@ export interface EmergencyContact {
   telefone: string;
 }
 
+export type LocationType = 'trabalho' | 'academia' | 'faculdade' | 'escola' | 'casa' | 'casa passeio';
+
 export interface MyLocation {
   _id?: string;
-  nome: string;
+  nome?: string;
   endereco: string;
   latitude?: number;
   longitude?: number;
+  tipo?: LocationType;
 }
 
 /** Modelo retornado pela API (campo `senha` nunca é retornado) */

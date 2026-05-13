@@ -14,16 +14,18 @@ import {
 } from 'react-native';
 
 import { LocationCard } from '@/components/Profile/LocationCard';
-import { MapPin, Plus, X } from 'lucide-react-native';
+import * as Location from 'expo-location';
+import { BookOpen, Briefcase, Dumbbell, GraduationCap, Home, Map, MapPin, Plus, X } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { updateUser } from '../services/userService';
-import type { MyLocation, UpdateUserPayload } from '../types/user';
+import type { LocationType, MyLocation, UpdateUserPayload } from '../types/user';
 
 type EditableField = 'nome' | 'email' | 'telefone' | 'contatoNome' | 'contatoTelefone';
 
 type ProfileForm = Record<EditableField, string>;
 
 type LocationForm = {
+  tipo?: LocationType;
   nome: string;
   endereco: string;
   latitude: string;
@@ -31,6 +33,7 @@ type LocationForm = {
 };
 
 const EMPTY_LOCATION_FORM: LocationForm = {
+  tipo: undefined,
   nome: '',
   endereco: '',
   latitude: '',
@@ -140,6 +143,7 @@ export default function ProfileScreen() {
   const openEditLocation = useCallback((location: MyLocation, index: number) => {
     setEditingLocationIndex(index);
     setLocationForm({
+      tipo: location.tipo,
       nome: location.nome ?? '',
       endereco: location.endereco ?? '',
       latitude: location.latitude?.toString() ?? '',
@@ -159,9 +163,15 @@ export default function ProfileScreen() {
     const endereco = locationForm.endereco.trim();
     const latitude = locationForm.latitude.trim();
     const longitude = locationForm.longitude.trim();
+    const tipo = locationForm.tipo;
 
-    if (!nome || !endereco) {
-      Alert.alert('Atencao', 'Preencha nome e endereco do local.');
+    if (!tipo) {
+      Alert.alert('Atencao', 'Selecione um tipo de local.');
+      return;
+    }
+
+    if (!endereco) {
+      Alert.alert('Atencao', 'Preencha o endereco do local.');
       return;
     }
 
@@ -178,10 +188,11 @@ export default function ProfileScreen() {
 
     const nextLocation: MyLocation = {
       ...(editingLocationIndex !== null ? locations[editingLocationIndex] : {}),
-      nome,
+      nome: nome || (tipo ? tipo.charAt(0).toUpperCase() + tipo.slice(1) : ''),
       endereco,
       latitude: parsedLatitude,
       longitude: parsedLongitude,
+      tipo,
     };
 
     const nextLocations =
@@ -439,6 +450,15 @@ type LocationModalProps = {
   onSave: () => void;
 };
 
+const LOCATION_TYPES: { label: string; value: LocationType; icon: any }[] = [
+  { label: 'Trabalho', value: 'trabalho', icon: Briefcase },
+  { label: 'Academia', value: 'academia', icon: Dumbbell },
+  { label: 'Faculdade', value: 'faculdade', icon: GraduationCap },
+  { label: 'Escola', value: 'escola', icon: BookOpen },
+  { label: 'Casa', value: 'casa', icon: Home },
+  { label: 'Casa passeio', value: 'casa passeio', icon: Map },
+];
+
 function LocationModal({
   visible,
   isEditing,
@@ -448,6 +468,32 @@ function LocationModal({
   onClose,
   onSave,
 }: LocationModalProps) {
+  const [fetchingGPS, setFetchingGPS] = useState(false);
+
+  useEffect(() => {
+    if (visible && !isEditing && !form.latitude && !form.longitude) {
+      (async () => {
+        setFetchingGPS(true);
+        try {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+            Alert.alert('Atenção', 'Permissão de localização negada. Preencha o endereço manualmente.');
+            return;
+          }
+          const location = await Location.getCurrentPositionAsync({});
+          onChange({
+            latitude: location.coords.latitude.toString(),
+            longitude: location.coords.longitude.toString(),
+          });
+        } catch (e) {
+          Alert.alert('Erro', 'Não foi possível obter a localização atual via GPS.');
+        } finally {
+          setFetchingGPS(false);
+        }
+      })();
+    }
+  }, [visible, isEditing, form.latitude, form.longitude, onChange]);
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
@@ -466,49 +512,71 @@ function LocationModal({
             </TouchableOpacity>
           </View>
 
+          <Text className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-dim">
+            Tipo de Local
+          </Text>
+          <View className="mb-4 flex-row flex-wrap gap-2">
+            {LOCATION_TYPES.map((type) => {
+              const isSelected = form.tipo === type.value;
+              const IconComponent = type.icon;
+              return (
+                <TouchableOpacity
+                  key={type.value}
+                  onPress={() => onChange({ tipo: type.value })}
+                  className={`flex-row items-center gap-2 rounded-xl border px-3 py-2 ${
+                    isSelected ? 'border-primary bg-primary/10' : 'border-surface-3 bg-surface'
+                  }`}>
+                  <IconComponent size={16} color={isSelected ? '#A78BFA' : '#9B98B8'} />
+                  <Text
+                    className={`text-sm ${
+                      isSelected ? 'font-bold text-primary-light' : 'font-medium text-text-muted'
+                    }`}>
+                    {type.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
           <ProfileInput
-            label="Nome"
+            label="Nome (Opcional)"
             value={form.nome}
-            placeholder="Casa, trabalho, faculdade..."
+            placeholder="Ex: Trabalho principal"
             onChangeText={(nome) => onChange({ nome })}
           />
           <ProfileInput
-            label="Endereco"
+            label="Endereço"
             value={form.endereco}
             placeholder="Rua, numero, bairro"
             onChangeText={(endereco) => onChange({ endereco })}
           />
 
-          <View className="flex-row gap-3">
-            <View className="flex-1">
-              <ProfileInput
-                label="Latitude"
-                value={form.latitude}
-                placeholder="Opcional"
-                keyboardType="numeric"
-                onChangeText={(latitude) => onChange({ latitude })}
-              />
+          {fetchingGPS && (
+            <View className="mb-4 flex-row items-center gap-2">
+              <ActivityIndicator size="small" color="#A78BFA" />
+              <Text className="text-xs text-text-muted">Obtendo localização GPS...</Text>
             </View>
-            <View className="flex-1">
-              <ProfileInput
-                label="Longitude"
-                value={form.longitude}
-                placeholder="Opcional"
-                keyboardType="numeric"
-                onChangeText={(longitude) => onChange({ longitude })}
-              />
+          )}
+
+          {!fetchingGPS && form.latitude && form.longitude ? (
+            <View className="mb-4 flex-row items-center gap-2 rounded-xl bg-surface-2 p-3">
+              <MapPin size={16} color="#4ADE80" />
+              <Text className="text-xs text-text-dim">
+                Localização capturada: {Number(form.latitude).toFixed(4)},{' '}
+                {Number(form.longitude).toFixed(4)}
+              </Text>
             </View>
-          </View>
+          ) : null}
 
           <TouchableOpacity
             onPress={onSave}
-            disabled={saving}
+            disabled={saving || fetchingGPS}
             className="mt-4 items-center rounded-2xl bg-primary py-4">
             {saving ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text className="text-base font-bold text-white">
-                {isEditing ? 'Salvar alteracoes' : 'Cadastrar local'}
+                {isEditing ? 'Salvar alterações' : 'Cadastrar local'}
               </Text>
             )}
           </TouchableOpacity>

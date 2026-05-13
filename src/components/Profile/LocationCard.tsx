@@ -1,6 +1,16 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Edit3, MapPin, Trash2 } from 'lucide-react-native';
+import {
+  BookOpen,
+  Briefcase,
+  Dumbbell,
+  Edit3,
+  GraduationCap,
+  Home,
+  Map,
+  MapPin,
+  Trash2,
+} from 'lucide-react-native';
 
 import type { MyLocation } from '../../types/user';
 
@@ -10,12 +20,23 @@ type LocationCardProps = {
   onDelete: () => void;
 };
 
+const TYPE_ICONS: Record<string, any> = {
+  trabalho: Briefcase,
+  academia: Dumbbell,
+  faculdade: GraduationCap,
+  escola: BookOpen,
+  casa: Home,
+  'casa passeio': Map,
+};
+
 export function LocationCard({ item, onEdit, onDelete }: LocationCardProps) {
+  const IconComponent = item.tipo && TYPE_ICONS[item.tipo] ? TYPE_ICONS[item.tipo] : MapPin;
+
   return (
     <View className="rounded-2xl border border-l-4 border-border border-l-primary bg-surface px-4 py-4">
       <View className="flex-row items-start gap-4">
         <View className="h-11 w-11 items-center justify-center rounded-xl bg-surface-2">
-          <MapPin size={20} color="#A78BFA" />
+          <IconComponent size={20} color="#A78BFA" />
         </View>
 
         <View className="flex-1">
