@@ -8,6 +8,10 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import TipsScreen from '../screens/TipsScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
+import GroupDetailScreen from '../screens/GroupDetailScreen';
+import CreateGroupScreen from '../screens/CreateGroupScreen';
+import InvitationsScreen from '../screens/InvitationsScreen';
+import InviteUserScreen from '../screens/InviteUserScreen';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Param Lists para type-safety nas navegações
@@ -22,6 +26,10 @@ export type AppStackParamList = {
   Main: undefined; // tab navigator
   Tips: undefined;
   Notifications: undefined;
+  GroupDetail: { groupId: string };
+  CreateGroup: undefined;
+  Invitations: undefined;
+  InviteUser: { groupId: string };
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -46,6 +54,10 @@ function AppRootNavigator() {
       <AppStack.Screen name="Main" component={AppNavigator} />
       <AppStack.Screen name="Tips" component={TipsScreen} options={{ headerShown: true, title: 'Dicas e Ajuda', headerBackTitle: '', headerTintColor: '#F0EFFE', headerStyle: { backgroundColor: '#1C1C27' } }} />
       <AppStack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notificações', headerBackTitle: '', headerTintColor: '#F0EFFE', headerStyle: { backgroundColor: '#1C1C27' } }} />
+      <AppStack.Screen name="GroupDetail" component={GroupDetailScreen} options={{ headerShown: true, title: 'Detalhes do Grupo', headerBackTitle: '', headerTintColor: '#F0EFFE', headerStyle: { backgroundColor: '#1C1C27' } }} />
+      <AppStack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ presentation: 'modal', headerShown: true, title: 'Novo Grupo', headerTintColor: '#F0EFFE', headerStyle: { backgroundColor: '#1C1C27' } }} />
+      <AppStack.Screen name="Invitations" component={InvitationsScreen} options={{ headerShown: true, title: 'Convites Pendentes', headerBackTitle: '', headerTintColor: '#F0EFFE', headerStyle: { backgroundColor: '#1C1C27' } }} />
+      <AppStack.Screen name="InviteUser" component={InviteUserScreen} options={{ presentation: 'modal', headerShown: true, title: 'Convidar Usuário', headerTintColor: '#F0EFFE', headerStyle: { backgroundColor: '#1C1C27' } }} />
     </AppStack.Navigator>
   );
 }

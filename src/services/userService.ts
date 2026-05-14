@@ -95,3 +95,32 @@ export async function deleteUser(
     token,
   });
 }
+
+/**
+ * GET /api/usuarios?nome=xxx 🔒
+ * Busca usuários pelo nome.
+ */
+export async function searchUsers(
+  nome: string,
+  token: string
+): Promise<{ total: number; usuarios: ApiUser[] }> {
+  return apiFetch<{ total: number; usuarios: ApiUser[] }>(`${BASE}?nome=${encodeURIComponent(nome)}`, {
+    token,
+  });
+}
+
+/**
+ * PUT /api/usuarios/localizacao 🔒
+ * Atualiza a última localização GPS do usuário.
+ */
+export async function updateLocation(
+  latitude: number,
+  longitude: number,
+  token: string
+): Promise<{ mensagem: string; ultimaLocalizacao: any }> {
+  return apiFetch<{ mensagem: string; ultimaLocalizacao: any }>(`${BASE}/localizacao`, {
+    method: 'PUT',
+    body: { latitude, longitude },
+    token,
+  });
+}

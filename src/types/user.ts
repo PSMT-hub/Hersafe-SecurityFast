@@ -18,6 +18,12 @@ export interface MyLocation {
   tipo?: LocationType;
 }
 
+export interface UltimaLocalizacao {
+  latitude: number;
+  longitude: number;
+  atualizadoEm: string;
+}
+
 /** Modelo retornado pela API (campo `senha` nunca é retornado) */
 export interface ApiUser {
   _id?: string;
@@ -27,6 +33,7 @@ export interface ApiUser {
   telefone?: string;
   contatoDeEmergencia?: EmergencyContact;
   meusLocais: MyLocation[];
+  ultimaLocalizacao?: UltimaLocalizacao;
   createdAt?: string;
   updatedAt?: string;
 }

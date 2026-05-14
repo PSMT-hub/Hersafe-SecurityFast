@@ -8,7 +8,9 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { loginUser, registerUser, getProfile } from '../services/userService';
+import * as Location from 'expo-location';
+
+import { loginUser, registerUser, getProfile, updateLocation } from '../services/userService';
 import type { ApiUser, RegisterPayload } from '../types/user';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -76,6 +78,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     bootstrap();
   }, []);
+
+  // ── Atualização de Localização (Se autenticado) ────────────────────────────
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    async function syncLocation() {
+      if (!token || !user) return;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.warn('Permissão de localização negada');
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+        await updateLocation(location.coords.latitude, location.coords.longitude, token);
+      } catch (error) {
+        console.warn('Erro ao sincronizar localização GPS:', error);
+      }
+    }
+
+    if (token && user && !isBootstrapping) {
+      // Sincroniza logo após autenticar/carregar app
+      syncLocation();
+      
+      // Atualiza a cada 5 minutos
+      intervalId = setInterval(syncLocation, 5 * 60 * 1000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [token, user, isBootstrapping]);
 
   // ── Login ──────────────────────────────────────────────────────────────────
   const login = useCallback(async (email: string, password: string) => {

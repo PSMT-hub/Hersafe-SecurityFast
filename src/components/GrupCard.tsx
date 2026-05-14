@@ -1,10 +1,15 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { Pencil, Users } from 'lucide-react-native';
-import { Group } from '@/Data/mockgroups';
- 
+import { Users, Users as DefaultIcon } from 'lucide-react-native';
+
 type Props = {
-  group: Group;
+  group: {
+    id: string;
+    name: string;
+    description?: string;
+    memberCount: number;
+    members?: any[];
+  };
   onEdit: (id: string) => void;
   onPress: (id: string) => void;
 };
@@ -13,9 +18,10 @@ const VISIBLE_AVATARS = 4;
 const AVATAR_OFFSET = -10;
  
 export default function GroupCard({ group, onEdit, onPress }: Props) {
-  const visibleMembers = group.members.slice(0, VISIBLE_AVATARS);
-  const remaining = group.members.length - VISIBLE_AVATARS;
-  const Icon = group.icon;
+  const members = group.members || [];
+  const visibleMembers = members.slice(0, VISIBLE_AVATARS);
+  const remaining = group.memberCount > members.length ? group.memberCount - visibleMembers.length : members.length - visibleMembers.length;
+  const Icon = DefaultIcon;
  
   return (
 <TouchableOpacity
@@ -40,7 +46,6 @@ export default function GroupCard({ group, onEdit, onPress }: Props) {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           className="w-8 h-8 rounded-lg bg-surface-2 items-center justify-center"
 >
-<Pencil size={14} color="#9B98B8" />
 </TouchableOpacity>
 </View>
  
@@ -56,11 +61,11 @@ export default function GroupCard({ group, onEdit, onPress }: Props) {
               className="w-8 h-8 rounded-full border-2 border-surface overflow-hidden"
               style={{ marginLeft: index === 0 ? 0 : AVATAR_OFFSET }}
 >
-<Image
-                source={{ uri: member.avatar }}
-                className="w-full h-full"
-                resizeMode="cover"
-              />
+<View
+                className="w-full h-full bg-primary items-center justify-center"
+              >
+                <Text className="text-white font-bold">{member?.nome?.charAt(0) || 'U'}</Text>
+              </View>
 </View>
           ))}
           {remaining > 0 && (
@@ -76,7 +81,7 @@ export default function GroupCard({ group, onEdit, onPress }: Props) {
         <View className="flex-row items-center gap-1.5">
 <Users size={13} color="#9B98B8" />
 <Text className="text-text-muted text-xs">
-            {group.members.length} {group.members.length === 1 ? 'membro' : 'membros'}
+            {group.memberCount} {group.memberCount === 1 ? 'membro' : 'membros'}
 </Text>
 </View>
 </View>

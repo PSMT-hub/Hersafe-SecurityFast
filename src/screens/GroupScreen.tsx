@@ -1,20 +1,57 @@
-import React from 'react';
-
-import { View, Text, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
-
-import { Plus } from 'lucide-react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StatusBar, ActivityIndicator, RefreshControl } from 'react-native';
+import { Plus, Bell } from 'lucide-react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import GroupCard from '@/components/GrupCard';
-
-import { MOCK_GROUPS } from '@/Data/mockgroups';
+import { getGroups } from '@/services/groupService';
+import { useAuth } from '@/context/AuthContext';
+import { Group } from '@/types/group';
+import { AppStackParamList } from '@/navigation/RootNavigator';
  
 export default function GroupScreen() {
+  const { token } = useAuth();
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const handleCreate = () => console.log('criar grupo');
+  const loadGroups = async () => {
+    if (!token) return;
+    try {
+      const data = await getGroups(token);
+      setGroups(data.grupos);
+    } catch (error) {
+      console.warn('Erro ao carregar grupos:', error);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  };
 
-  const handleEdit = (id: string) => console.log('editar:', id);
+  useFocusEffect(
+    useCallback(() => {
+      loadGroups();
+    }, [token])
+  );
 
-  const handlePress = (id: string) => console.log('abrir grupo:', id);
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadGroups();
+  };
+
+  const handleCreate = () => {
+    navigation.navigate('CreateGroup');
+  };
+
+  const handlePress = (id: string) => {
+    navigation.navigate('GroupDetail', { groupId: id });
+  };
+
+  const handleOpenInvitations = () => {
+    navigation.navigate('Invitations');
+  };
  
   return (
 <View className="flex-1 bg-bg">
@@ -26,10 +63,14 @@ export default function GroupScreen() {
 <View>
 <Text className="text-text text-2xl font-bold">Grupos</Text>
 <Text className="text-text-muted text-sm mt-1">
-
-              {MOCK_GROUPS.length} grupos criados
+              {groups.length} grupos
 </Text>
 </View>
+
+          <View className="flex-row items-center gap-3">
+            <TouchableOpacity onPress={handleOpenInvitations} className="bg-surface p-2.5 rounded-full border border-border">
+              <Bell size={20} color="#F0EFFE" />
+            </TouchableOpacity>
  
           <TouchableOpacity
 
@@ -44,6 +85,7 @@ export default function GroupScreen() {
 </TouchableOpacity>
 </View>
 </View>
+</View>
  
       {/* List */}
 <ScrollView
@@ -51,22 +93,30 @@ export default function GroupScreen() {
         showsVerticalScrollIndicator={false}
 
         contentContainerStyle={{ paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#A78BFA" />
+        }
 >
-
-        {MOCK_GROUPS.map((group) => (
-<GroupCard
-
-            key={group.id}
-
-            group={group}
-
-            onEdit={handleEdit}
-
-            onPress={handlePress}
-
-          />
-
-        ))}
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#A78BFA" style={{ marginTop: 40 }} />
+        ) : groups.length === 0 ? (
+          <View className="items-center justify-center pt-20">
+            <Text className="text-text-muted text-base">Você não participa de nenhum grupo.</Text>
+          </View>
+        ) : (
+          groups.map((group) => (
+            <GroupCard
+              key={group._id}
+              group={{
+                id: group._id,
+                name: group.nome,
+                memberCount: Array.isArray(group.membros) ? group.membros.length : 0,
+              }}
+              onEdit={() => {}}
+              onPress={handlePress}
+            />
+          ))
+        )}
 </ScrollView>
 </View>
 
