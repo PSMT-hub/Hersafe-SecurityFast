@@ -103,8 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Sincroniza logo após autenticar/carregar app
       syncLocation();
       
-      // Atualiza a cada 5 minutos
-      intervalId = setInterval(syncLocation, 5 * 60 * 1000);
+      // Atualiza a cada 30 segundos para localização em tempo quase-real nos grupos
+      intervalId = setInterval(syncLocation, 30 * 1000);
     }
 
     return () => {

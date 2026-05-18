@@ -10,6 +10,7 @@ import type {
   LoginPayload,
   RegisterPayload,
   UpdateUserPayload,
+  ApiUser,
 } from '../types/user';
 
 const BASE = '/usuarios';

@@ -43,7 +43,7 @@ export default function InviteUserScreen() {
       await sendInvitation(userId, groupId, token);
       Alert.alert('Sucesso', 'Convite enviado com sucesso!');
       // remove da lista de resultados
-      setResults(prev => prev.filter(u => u.id !== userId));
+      setResults(prev => prev.filter(u => (u._id ?? u.id) !== userId));
     } catch (error: any) {
       Alert.alert('Erro', error.message || 'Falha ao enviar convite.');
     } finally {
@@ -69,34 +69,37 @@ export default function InviteUserScreen() {
 
       <FlatList
         data={results}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id ?? item.id}
         ListEmptyComponent={
           !isSearching && searchQuery.length > 0 ? (
             <Text className="text-center text-text-muted mt-10">Nenhum usuário encontrado.</Text>
           ) : null
         }
-        renderItem={({ item }) => (
-          <View className="bg-surface p-4 rounded-xl mb-3 flex-row items-center justify-between">
-            <View className="flex-1 mr-4">
-              <Text className="text-white font-medium text-base">{item.nome}</Text>
-              <Text className="text-text-muted text-sm">{item.email}</Text>
+        renderItem={({ item }) => {
+          const userId = item._id ?? item.id;
+          return (
+            <View className="bg-surface p-4 rounded-xl mb-3 flex-row items-center justify-between">
+              <View className="flex-1 mr-4">
+                <Text className="text-white font-medium text-base">{item.nome}</Text>
+                <Text className="text-text-muted text-sm">{item.email}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => handleInvite(userId)}
+                disabled={invitingId === userId}
+                className="bg-primary px-3 py-2 rounded-lg flex-row items-center gap-2"
+              >
+                {invitingId === userId ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <UserPlus size={16} color="#fff" />
+                    <Text className="text-white font-semibold text-sm">Convidar</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              onPress={() => handleInvite(item.id)}
-              disabled={invitingId === item.id}
-              className="bg-primary px-3 py-2 rounded-lg flex-row items-center gap-2"
-            >
-              {invitingId === item.id ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <UserPlus size={16} color="#fff" />
-                  <Text className="text-white font-semibold text-sm">Convidar</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
+          );
+        }}
       />
     </View>
   );

@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Dimensions } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Dimensions, RefreshControl } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { UserPlus, MapPin, Trash2 } from 'lucide-react-native';
+import { UserPlus, Trash2 } from 'lucide-react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 
 import { AppStackParamList } from '@/navigation/RootNavigator';
@@ -17,25 +17,38 @@ export default function GroupDetailScreen() {
 
   const [group, setGroup] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const loadGroup = async () => {
+  const loadGroup = async (silent = false) => {
     if (!token) return;
+    if (!silent) setIsLoading(true);
     try {
       const data = await getGroupById(groupId, token);
       setGroup(data.grupo);
     } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Falha ao carregar detalhes do grupo.');
-      navigation.goBack();
+      if (!silent) {
+        Alert.alert('Erro', error.message || 'Falha ao carregar detalhes do grupo.');
+        navigation.goBack();
+      }
     } finally {
       setIsLoading(false);
+      setRefreshing(false);
     }
   };
 
   useFocusEffect(
     useCallback(() => {
       loadGroup();
+      // Auto-refresh a cada 30 segundos enquanto a tela está em foco
+      const interval = setInterval(() => loadGroup(true), 30 * 1000);
+      return () => clearInterval(interval);
     }, [groupId, token])
   );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadGroup();
+  };
 
   const handleInvite = () => {
     navigation.navigate('InviteUser', { groupId });
@@ -59,6 +72,28 @@ export default function GroupDetailScreen() {
     ]);
   };
 
+  const handleDeleteGroup = () => {
+    Alert.alert(
+      'Deletar Grupo',
+      `Tem certeza que deseja deletar "${group?.nome}"? Esta ação não pode ser desfeita.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Deletar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteGroup(groupId, token!);
+              navigation.goBack();
+            } catch (e: any) {
+              Alert.alert('Erro', e.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (isLoading || !group) {
     return (
       <View className="flex-1 bg-bg justify-center items-center">
@@ -67,18 +102,38 @@ export default function GroupDetailScreen() {
     );
   }
 
-  const isCreator = typeof group.criador === 'object' && group.criador._id === currentUser?.id;
+  // Compara IDs usando String() nos dois lados para evitar problemas com ObjectId vs string
+  const creatorId = typeof group.criador === 'object' ? String(group.criador._id) : String(group.criador);
+  const isCreator = creatorId === String(currentUser?.id);
 
   // Filtrar membros com localização válida
   const membersWithLocation = (group.membros || []).filter((m: any) => m.ultimaLocalizacao && m.ultimaLocalizacao.latitude && m.ultimaLocalizacao.longitude);
 
   return (
-    <ScrollView className="flex-1 bg-bg" contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView
+      className="flex-1 bg-bg"
+      contentContainerStyle={{ paddingBottom: 40 }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#A78BFA" />
+      }
+    >
       <View className="px-4 pt-6 pb-4">
-        <Text className="text-white text-2xl font-bold">{group.nome}</Text>
-        {group.descricao ? (
-          <Text className="text-text-muted mt-2">{group.descricao}</Text>
-        ) : null}
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 mr-3">
+            <Text className="text-white text-2xl font-bold">{group.nome}</Text>
+            {group.descricao ? (
+              <Text className="text-text-muted mt-2">{group.descricao}</Text>
+            ) : null}
+          </View>
+          {isCreator && (
+            <TouchableOpacity
+              onPress={handleDeleteGroup}
+              className="p-2 mt-1 bg-red-500/10 rounded-xl"
+            >
+              <Trash2 size={20} color="#EF4444" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Mapa */}
@@ -124,8 +179,8 @@ export default function GroupDetailScreen() {
         </View>
 
         {group.membros?.map((member: any) => {
-          const isMe = member._id === currentUser?.id;
-          const isMemberCreator = typeof group.criador === 'object' && group.criador._id === member._id;
+          const isMe = String(member._id) === String(currentUser?.id);
+          const isMemberCreator = String(member._id) === creatorId;
 
           return (
             <View key={member._id} className="bg-surface p-4 rounded-xl mb-3 flex-row items-center justify-between">

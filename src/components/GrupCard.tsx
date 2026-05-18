@@ -56,17 +56,17 @@ export default function GroupCard({ group, onEdit, onPress }: Props) {
 <View className="flex-row items-center justify-between">
 <View className="flex-row items-center">
           {visibleMembers.map((member, index) => (
-<View
-              key={member.id}
+            <View
+              key={member._id ?? member.id ?? String(index)}
               className="w-8 h-8 rounded-full border-2 border-surface overflow-hidden"
               style={{ marginLeft: index === 0 ? 0 : AVATAR_OFFSET }}
->
-<View
+            >
+              <View
                 className="w-full h-full bg-primary items-center justify-center"
               >
                 <Text className="text-white font-bold">{member?.nome?.charAt(0) || 'U'}</Text>
               </View>
-</View>
+            </View>
           ))}
           {remaining > 0 && (
 <View
