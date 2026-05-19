@@ -43,6 +43,17 @@ const MOCK_TIPS: TipCard[] = [
     actionText: 'Acessar Portal',
     url: 'https://www.delegaciaeletronica.policiacivil.sp.gov.br/',
   },
+  {
+    id: '4',
+    title: 'Medida protetiva de segurança',
+    description: 'Saiba como funciona a medida protetiva de segurança e como obtê-la.',
+    type: 'info',
+    actionText: 'Acessar App',
+    url: 'https://play.google.com/store/apps/details?id=br.gov.sp.ssp.spmulher&pcampaignid=web_share',
+  },
+
+
+
 
 ];
 

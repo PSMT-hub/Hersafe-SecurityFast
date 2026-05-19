@@ -8,7 +8,9 @@ import { Person, SafePlace } from '@/types';
 import { Group } from '@/types/group';
 import { ApiUser, MyLocation } from '@/types/user';
 import { getGroupById, getGroups } from '@/services/groupService';
+import { triggerEmergency } from '@/services/notificationService';
 import { useAuth } from '@/context/AuthContext';
+import { useNotifications } from '@/context/NotificationContext';
 import { colors } from '@/theme/colors';
 
 function getUserId(user: ApiUser): string {
@@ -96,6 +98,7 @@ function normalizePlaces(members: Group['membros']): SafePlace[] {
 
 export default function HomeScreen() {
   const { token } = useAuth();
+  const { refreshUnreadCount } = useNotifications();
   const detailRequestId = useRef(0);
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
@@ -187,8 +190,19 @@ export default function HomeScreen() {
     console.log('[HomeScreen] person pressed:', person.id);
   };
 
-  const handleEmergencyTrigger = () => {
-    console.log('[HomeScreen] emergency triggered');
+  const handleEmergencyTrigger = async () => {
+    if (!token) return;
+
+    try {
+      const data = await triggerEmergency(token);
+      Alert.alert(
+        'Alerta enviado',
+        `Sua emergencia foi enviada para ${data.totalDestinatarios} pessoa(s) dos seus grupos.`
+      );
+      refreshUnreadCount();
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Falha ao enviar alerta de emergencia.');
+    }
   };
 
   return (

@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import './global.css';
 import { AuthProvider } from './src/context/AuthContext';
+import { NotificationProvider } from './src/context/NotificationContext';
 import RootNavigator from './src/navigation/RootNavigator';
 
 export default function App() {
@@ -11,9 +12,11 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar style="light" backgroundColor="#121218" />
       <AuthProvider>
-        <NavigationContainer>
-          <RootNavigator />
-        </NavigationContainer>
+        <NotificationProvider>
+          <NavigationContainer>
+            <RootNavigator />
+          </NavigationContainer>
+        </NotificationProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

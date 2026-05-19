@@ -4,10 +4,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Check, X } from 'lucide-react-native';
 
 import { useAuth } from '@/context/AuthContext';
+import { useNotifications } from '@/context/NotificationContext';
 import { getPendingInvitations, respondInvitation } from '@/services/invitationService';
 
 export default function InvitationsScreen() {
   const { token } = useAuth();
+  const { refreshUnreadCount } = useNotifications();
   
   const [invitations, setInvitations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,6 +49,7 @@ export default function InvitationsScreen() {
       Alert.alert('Sucesso', `Convite ${status} com sucesso!`);
       // Atualiza a lista removendo o convite respondido
       setInvitations(prev => prev.filter(inv => inv._id !== invitationId));
+      refreshUnreadCount();
     } catch (error: any) {
       Alert.alert('Erro', error.message || `Falha ao ${status} convite.`);
     } finally {

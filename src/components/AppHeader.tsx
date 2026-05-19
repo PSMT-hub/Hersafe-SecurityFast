@@ -1,17 +1,20 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/RootNavigator';
+import logo from '../assets/image.png';
+import { useNotifications } from '../context/NotificationContext';
 
 type NavigationProp = NativeStackNavigationProp<AppStackParamList>;
 
 export default function AppHeader() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { unreadCount } = useNotifications();
 
   return (
     <View
@@ -22,8 +25,8 @@ export default function AppHeader() {
     >
       {/* ── Logo / Nome do app ──────────────────────── */}
       <View style={styles.logoRow}>
-        {/* Ícone escudo pequeno ao lado do nome */}
-        <Ionicons name="shield-half-outline" size={18} color={colors.primaryLight} />
+        {/* Logo oficial ao lado do nome */}
+        <Image source={logo} style={styles.logoImage} resizeMode="contain" />
         <Text style={styles.logoText}>HER</Text>
         <Text style={styles.logoAccent}>SAFE</Text>
       </View>
@@ -44,6 +47,11 @@ export default function AppHeader() {
           activeOpacity={0.75}
         >
           <Ionicons name="notifications-outline" size={18} color={colors.text} />
+          {unreadCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -65,6 +73,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems:    'center',
     gap:           4,
+  },
+  logoImage: {
+    width: 24,
+    height: 24,
   },
   logoText: {
     fontSize:    18,
@@ -94,5 +106,25 @@ const styles = StyleSheet.create({
     // Brilho sutil no botão
     borderWidth:     1,
     borderColor:     colors.primaryDark,
+  },
+  badge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: colors.emergency,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.surface,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '800',
+    lineHeight: 12,
   },
 });

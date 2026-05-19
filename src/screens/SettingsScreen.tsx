@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Switch, TouchableOpacity, Modal, Image, ScrollView } from 'react-native';
 import { Users, X } from 'lucide-react-native';
 import { colors } from '../theme/colors';
-
+import banner from '../assets/banner.jpg';
 export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [colabModalVisible, setColabModalVisible] = useState(false);
@@ -58,7 +58,7 @@ export default function SettingsScreen() {
             {/* Imagem de Capa */}
             <View className="h-40 w-full relative">
               <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80' }}
+                source={banner}
                 className="w-full h-full"
                 resizeMode="cover"
               />
