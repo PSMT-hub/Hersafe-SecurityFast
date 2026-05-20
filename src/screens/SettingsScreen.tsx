@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, Switch, TouchableOpacity, Modal, Image, ScrollView } from 'react-native';
+import { View, Text, Switch, TouchableOpacity, Modal, Image, ScrollView, Alert } from 'react-native';
 import { Users, X } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import banner from '../assets/banner.jpg';
+import { useAuth } from '../context/AuthContext';
+
 export default function SettingsScreen() {
+  const { logout } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [colabModalVisible, setColabModalVisible] = useState(false);
+
+  const handleLogout = () => {
+    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: () => logout() },
+    ]);
+  };
 
   return (
     <View className="flex-1 p-6 bg-bg">
@@ -40,10 +50,14 @@ export default function SettingsScreen() {
       </TouchableOpacity>
 
       {/* Card: Sair */}
-      <View className="p-4 bg-surface rounded-lg border border-border">
+      <TouchableOpacity
+        activeOpacity={0.8}
+        className="p-4 bg-surface rounded-lg border border-border"
+        onPress={handleLogout}
+      >
         <Text className="text-base font-semibold text-danger">Sair da conta</Text>
         <Text className="text-sm text-text-muted mt-0.5">Encerrar sessão atual</Text>
-      </View>
+      </TouchableOpacity>
 
       {/* Modal de Colaboradores */}
       <Modal

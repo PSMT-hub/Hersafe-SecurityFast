@@ -23,7 +23,7 @@ export type AuthStackParamList = {
 };
 
 export type AppStackParamList = {
-  Main: undefined; // tab navigator
+  Home: undefined; // tab navigator
   Tips: undefined;
   Notifications: undefined;
   GroupDetail: { groupId: string };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StatusBar, ActivityIndicator, RefreshControl } from 'react-native';
-import { Plus, Bell } from 'lucide-react-native';
+import { Plus, Bell, Users } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -63,7 +63,7 @@ export default function GroupScreen() {
 <View>
 <Text className="text-text text-2xl font-bold">Grupos</Text>
 <Text className="text-text-muted text-sm mt-1">
-              {groups.length} grupos
+              {groups.length} {groups.length === 1 ? 'grupo' : 'grupos'}
 </Text>
 </View>
 
@@ -100,8 +100,22 @@ export default function GroupScreen() {
         {isLoading ? (
           <ActivityIndicator size="large" color="#A78BFA" style={{ marginTop: 40 }} />
         ) : groups.length === 0 ? (
-          <View className="items-center justify-center pt-20">
-            <Text className="text-text-muted text-base">Você não participa de nenhum grupo.</Text>
+          <View className="flex-1 items-center justify-center px-8 pt-20">
+            <View className="w-16 h-16 rounded-full bg-surface-2 items-center justify-center mb-4 border border-border">
+              <Users size={28} color="#9B98B8" />
+            </View>
+            <Text className="text-text font-bold text-lg text-center mb-2">Nenhum grupo encontrado</Text>
+            <Text className="text-text-muted text-sm text-center mb-6">
+              Crie um círculo de segurança ou solicite um convite de um amigo para começar a compartilhar localizações em tempo real.
+            </Text>
+            <TouchableOpacity
+              onPress={handleCreate}
+              activeOpacity={0.8}
+              className="bg-primary px-6 py-3 rounded-xl flex-row items-center gap-2"
+            >
+              <Plus size={16} color="#fff" />
+              <Text className="text-white font-semibold text-sm">Criar meu primeiro grupo</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           groups.map((group) => (
@@ -110,7 +124,9 @@ export default function GroupScreen() {
               group={{
                 id: group._id,
                 name: group.nome,
+                description: group.descricao,
                 memberCount: Array.isArray(group.membros) ? group.membros.length : 0,
+                members: group.membros,
               }}
               onEdit={() => {}}
               onPress={handlePress}
@@ -119,8 +135,6 @@ export default function GroupScreen() {
         )}
 </ScrollView>
 </View>
-
   );
-
 }
  

@@ -41,7 +41,7 @@ const EMPTY_LOCATION_FORM: LocationForm = {
 };
 
 export default function ProfileScreen() {
-  const { user, token, logout, refreshUser } = useAuth();
+  const { user, token, refreshUser } = useAuth();
 
   const [editing, setEditing] = useState<EditableField | null>(null);
   const [savingField, setSavingField] = useState(false);
@@ -239,12 +239,6 @@ export default function ProfileScreen() {
     [buildPayload, locations, saveProfile]
   );
 
-  const handleLogout = useCallback(() => {
-    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: () => logout() },
-    ]);
-  }, [logout]);
 
   if (!user) return null;
 
@@ -333,13 +327,6 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <View className="mt-8 px-6">
-          <TouchableOpacity
-            onPress={handleLogout}
-            className="items-center rounded-2xl border border-emergency bg-emergency-muted py-4">
-            <Text className="text-sm font-semibold text-emergency">Sair da conta</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
       <LocationModal
