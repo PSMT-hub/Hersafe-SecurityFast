@@ -51,7 +51,7 @@ function AuthNavigator() {
 function AppRootNavigator() {
   return (
     <AppStack.Navigator screenOptions={{ headerShown: false }}>
-      <AppStack.Screen name="Main" component={AppNavigator} />
+      <AppStack.Screen name="Home" component={AppNavigator} />
       <AppStack.Screen name="Tips" component={TipsScreen} options={{ headerShown: true, title: 'Dicas e Ajuda', headerBackTitle: '', headerTintColor: '#F0EFFE', headerStyle: { backgroundColor: '#1C1C27' } }} />
       <AppStack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notificações', headerBackTitle: '', headerTintColor: '#F0EFFE', headerStyle: { backgroundColor: '#1C1C27' } }} />
       <AppStack.Screen name="GroupDetail" component={GroupDetailScreen} options={{ headerShown: true, title: 'Detalhes do Grupo', headerBackTitle: '', headerTintColor: '#F0EFFE', headerStyle: { backgroundColor: '#1C1C27' } }} />

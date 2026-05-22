@@ -35,11 +35,19 @@ function getExpoHost(): string | null {
 
 const DEFAULT_API_HOST = Platform.OS === 'web' ? 'localhost' : getExpoHost();
 
-/** URL base da API. No Expo Go, usa automaticamente o mesmo host do Metro. */
 export const BASE_URL = (
   process?.env?.EXPO_PUBLIC_API_URL ??
   `http://${DEFAULT_API_HOST ?? 'localhost'}:${API_PORT}${API_PATH}`
 ).replace(/\/$/, '');
+
+let activeBaseUrl = BASE_URL;
+
+console.log(`[HERSAFE API] URL inicial: ${BASE_URL}`);
+
+function getFallbackBaseUrl(): string {
+  const host = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+  return `http://${host}:${API_PORT}${API_PATH}`;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -76,18 +84,39 @@ export async function apiFetch<T = unknown>(path: string, options: FetchOptions 
 
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}${path}`, {
+    response = await fetch(`${activeBaseUrl}${path}`, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });
   } catch (error: any) {
+    const fallbackUrl = getFallbackBaseUrl();
     const isTimeout = error?.name === 'AbortError';
-    const reason = isTimeout ? 'tempo limite excedido' : 'falha de conexao';
-    throw new Error(
-      `Nao foi possivel conectar a API em ${BASE_URL} (${reason}). Verifique se o backend esta rodando e se o celular/emulador esta na mesma rede.`
-    );
+
+    if (!isTimeout && activeBaseUrl !== fallbackUrl) {
+      console.warn(`[apiFetch] Falha ao conectar em ${activeBaseUrl}. Tentando fallback local: ${fallbackUrl}`);
+      try {
+        response = await fetch(`${fallbackUrl}${path}`, {
+          method,
+          headers,
+          body: body !== undefined ? JSON.stringify(body) : undefined,
+          signal: controller.signal,
+        });
+        activeBaseUrl = fallbackUrl;
+        console.log(`[apiFetch] Fallback local funcionou! Nova URL base ativa: ${activeBaseUrl}`);
+      } catch (fallbackError) {
+        console.error(`[apiFetch] Ambos falharam (${activeBaseUrl} e ${fallbackUrl})`);
+        throw new Error(
+          `Nao foi possivel conectar a API em ${activeBaseUrl} ou no fallback (${fallbackUrl}). Verifique se o backend esta rodando.`
+        );
+      }
+    } else {
+      const reason = isTimeout ? 'tempo limite excedido' : 'falha de conexao';
+      throw new Error(
+        `Nao foi possivel conectar a API em ${activeBaseUrl} (${reason}). Verifique se o backend esta rodando e se o celular/emulador esta na mesma rede.`
+      );
+    }
   } finally {
     clearTimeout(timeoutId);
   }
